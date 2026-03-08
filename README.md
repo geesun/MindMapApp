@@ -1,120 +1,223 @@
 # MindMap
 
-一个基于 Tauri 2 + Vue 3 + TypeScript 的桌面思维导图应用。
+A lightweight, cross-platform mind map desktop application built with **Tauri 2 + Vue 3 + TypeScript**.
 
-## 功能
+---
 
-- Markdown 导入（将层级文本转换为思维导图）
-- 新建/打开/保存 `.mindmap.md` 文件
-- 节点编辑（增删改、拖拽、快捷键）
-- 三种布局：`radial`、`tree-lr`、`tree-tb`
-- 节点样式与连线样式可配置
-- 导出图片（PNG / SVG）
-- 中英文界面切换
-- 深浅主题切换
+## Features
 
-## 技术栈
+### Core Editing
+- Create, open, and save mind maps as `.mindmap.md` files (Markdown-based, human-readable format)
+- Import any standard `.md` file and automatically convert headings / lists into a mind map tree
+- Add child nodes (`Tab`), sibling nodes (`Enter`), delete nodes (`Delete` / `Backspace`)
+- Rename nodes inline with double-click or `F2`
+- Drag & drop to reparent nodes
+- Promote a node up one level (`Shift+Tab`)
+- Copy / Cut / Paste nodes (`Cmd/Ctrl + C/X/V`)
+- Full Undo / Redo (`Cmd/Ctrl + Z / Shift+Z`)
 
-- 前端：Vue 3 + TypeScript + Pinia
-- 桌面端：Tauri 2
-- 绘制引擎：LeaferJS
+### Layout
+- **Radial** — nodes radiate outward from the center
+- **Tree Left→Right** — classic horizontal tree
+- **Tree Top→Bottom** — vertical tree
 
-## 本地开发
+### Styling
+- Per-node background color, text color, and shape (`rect`, `rounded`, `pill`, `ellipse`, `hexagon`)
+- Bold / italic / underline / strikethrough text
+- Global connector line style: color, width, type (`straight` / `curved`), curve mode
+- Canvas background: solid color + optional pattern (`none`, `dots`, `grid`, `diagonal`)
+- Dark / Light theme toggle
 
-### 1) 环境要求
+### File & Safety
+- **Autosave** — 30-second debounce; files with a saved path are updated in-place silently; new unsaved maps are written to a draft in `AppLocalData/drafts/`
+- **Draft recovery** — welcome screen lists unsaved drafts so you can recover after a crash; drafts are automatically deleted when the file is properly saved
+- **Unsaved-changes guard** — prompted when closing the window, pressing `Cmd+Q`, creating a new map, or opening another file
+- Recent files list on the welcome screen
 
-- Node.js 18+
-- Rust（stable）
-- 平台依赖按 Tauri 官方文档安装
+### Export
+- Export canvas as **PNG** or **SVG**
 
-Rust 安装示例：
+### UI / UX
+- Welcome screen with quick-action cards and recent/draft file lists
+- Status bar showing node count, selected node, autosave state, layout, and zoom controls
+- Chinese / English interface toggle
+- Keyboard shortcuts for all common actions
 
-```bash
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-```
+---
 
-### 2) 安装依赖
+## Tech Stack
+
+| Layer | Technology |
+|---|---|
+| Frontend | Vue 3, TypeScript, Pinia |
+| Desktop shell | Tauri 2 (Rust) |
+| Rendering engine | LeaferJS |
+| Build tool | Vite |
+
+---
+
+## Development Setup
+
+### Prerequisites
+
+| Tool | Version | Install |
+|---|---|---|
+| Node.js | 18+ | https://nodejs.org |
+| Rust (stable) | latest | `curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs \| sh` |
+| Platform deps | — | See [Tauri prerequisites](https://tauri.app/start/prerequisites/) |
+
+> **macOS** — Xcode Command Line Tools required: `xcode-select --install`
+>
+> **Windows** — Microsoft C++ Build Tools (MSVC) required.
+>
+> **Ubuntu** — `sudo apt install libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf`
+
+### Install dependencies
 
 ```bash
 npm install
 ```
 
-### 3) 启动开发模式
+### Start dev mode (hot-reload)
 
 ```bash
 npm run tauri dev
 ```
 
-### 4) 类型检查
+### Type check only
 
 ```bash
 npx tsc --noEmit
 ```
 
-## 构建发布
-
-### macOS: 生成 DMG
-
-在 macOS 上执行：
+### Rust compile check
 
 ```bash
-npx tauri build --target aarch64-apple-darwin
+cd src-tauri && cargo check
 ```
 
-产物路径：
+---
 
-- `src-tauri/target/aarch64-apple-darwin/release/bundle/dmg/MindMap_0.1.0_aarch64.dmg`
+## Building Release Packages
 
-如果你是 Intel Mac，可改为：
+### macOS — Universal DMG (arm64 + x86_64)
+
+Use the provided script on any Mac (Apple Silicon or Intel):
 
 ```bash
+./scripts/build-dmg.sh
+```
+
+The script will:
+1. Check that `node`, `npm`, `cargo`, `rustup` are installed
+2. Install both `aarch64-apple-darwin` and `x86_64-apple-darwin` Rust targets
+3. Run `npm install`
+4. Build a Universal Binary DMG via `npx tauri build --target universal-apple-darwin`
+
+Output:
+```
+src-tauri/target/universal-apple-darwin/release/bundle/dmg/MindMap_0.1.0_universal.dmg
+```
+
+You can also build for a single architecture:
+
+```bash
+# Apple Silicon only
+npx tauri build --target aarch64-apple-darwin
+
+# Intel only
 npx tauri build --target x86_64-apple-darwin
 ```
 
-### Ubuntu: 生成 DEB
+---
 
-项目已提供脚本：`scripts/build-deb.sh`
+### Windows — NSIS installer + MSI
 
-在 Ubuntu 上执行：
+Run on a Windows machine (PowerShell or CMD):
+
+```bat
+scripts\build-win.bat
+```
+
+The script will:
+1. Check that `node`, `npm`, `cargo`, `rustup` are installed
+2. Install the `x86_64-pc-windows-msvc` Rust target
+3. Run `npm install`
+4. Build via `npx tauri build --target x86_64-pc-windows-msvc`
+
+Output:
+```
+src-tauri\target\x86_64-pc-windows-msvc\release\bundle\nsis\MindMap_0.1.0_x64-setup.exe
+src-tauri\target\x86_64-pc-windows-msvc\release\bundle\msi\MindMap_0.1.0_x64_en-US.msi
+```
+
+---
+
+### Ubuntu — DEB package
+
+Run on an Ubuntu machine:
 
 ```bash
 ./scripts/build-deb.sh
 ```
 
-该脚本会：
+The script will:
+1. Check that `node`, `npm`, `cargo`, `rustup` are installed
+2. Install the `x86_64-unknown-linux-gnu` Rust target
+3. Run `npm install`
+4. Build via `npx tauri build --target x86_64-unknown-linux-gnu --bundles deb`
 
-1. 检查 `node` / `npm` / `cargo` / `rustup`
-2. 安装 Rust target: `x86_64-unknown-linux-gnu`
-3. 安装 npm 依赖
-4. 调用 `npx tauri build --target x86_64-unknown-linux-gnu --bundles deb`
+Output:
+```
+src-tauri/target/x86_64-unknown-linux-gnu/release/bundle/deb/*.deb
+```
 
-DEB 产物路径：
+---
 
-- `src-tauri/target/x86_64-unknown-linux-gnu/release/bundle/deb/*.deb`
+## Project Structure
 
-## 图标
+```
+MindMapApp/
+├── src/                        # Vue frontend
+│   ├── components/             # UI components (Toolbar, RightPanel, Canvas, etc.)
+│   ├── composables/            # Business logic hooks
+│   │   ├── useAutosave.ts      # 30s autosave + draft management
+│   │   ├── useExport.ts        # PNG / SVG export
+│   │   ├── useLocale.ts        # i18n (zh / en)
+│   │   ├── useMindmapFile.ts   # Open / save / import / serialize
+│   │   ├── useRecentFiles.ts   # Recent file list (localStorage)
+│   │   └── useTheme.ts         # Dark / light theme
+│   ├── stores/
+│   │   └── mindmap.ts          # Pinia store — all map state & actions
+│   └── types/
+│       └── mindmap.ts          # Core domain types
+├── src-tauri/                  # Tauri / Rust backend
+│   ├── capabilities/
+│   │   └── default.json        # Tauri ACL permissions
+│   ├── icons/                  # App icons (generated from icon.svg)
+│   └── src/
+│       └── lib.rs              # Window events, menu, Tauri commands
+├── scripts/
+│   ├── build-dmg.sh            # macOS Universal DMG build script
+│   ├── build-deb.sh            # Ubuntu DEB build script
+│   └── build-win.bat           # Windows NSIS/MSI build script
+├── test/                       # Sample .mindmap.md / .md fixtures
+└── README.md
+```
 
-主图标源文件：`src-tauri/icons/icon.svg`
+---
 
-从 SVG 重新生成各平台图标：
+## App Icons
+
+Source file: `src-tauri/icons/icon.svg`
+
+Regenerate all platform icons from SVG:
 
 ```bash
 npx tauri icon src-tauri/icons/icon.svg -o src-tauri/icons
 ```
 
-## 项目结构
-
-```text
-MindMap/
-├── src/                     # Vue 前端源码
-├── src-tauri/               # Tauri / Rust 端
-│   ├── icons/               # 应用图标
-│   ├── src/                 # Rust 代码
-│   └── tauri.conf.json      # Tauri 配置
-├── scripts/
-│   └── build-deb.sh         # Ubuntu 上构建 DEB 的脚本
-└── README.md
-```
+---
 
 ## License
 
