@@ -1,0 +1,154 @@
+:root {
+  /* === Colors === */
+  --color-bg: #1c1c1e;
+  --color-surface: #2c2c2e;
+  --color-surface-2: #3a3a3c;
+  --color-surface-3: #48484a;
+  --color-surface-hover: #3a3a3c;
+  --color-border: rgba(255, 255, 255, 0.08);
+  --color-border-light: rgba(255, 255, 255, 0.05);
+
+  --color-text-primary: #f5f5f7;
+  --color-text-secondary: #98989d;
+  --color-text-disabled: #48484a;
+
+  --color-accent: #4f8ef7;
+  --color-accent-hover: #5f9eff;
+  --color-accent-light: rgba(79, 142, 247, 0.15);
+  --color-accent-glow: rgba(79, 142, 247, 0.3);
+  --color-danger: #ff453a;
+  --color-success: #30d158;
+
+  --color-canvas-bg: #141416;
+
+  /* === Layout === */
+  --header-height: 44px;
+  --panel-width: 260px;
+  --statusbar-height: 24px;
+
+  /* === Spacing === */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 12px;
+  --spacing-lg: 16px;
+  --spacing-xl: 24px;
+
+  /* === Radius === */
+  --radius-sm: 5px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+
+  /* === Shadow === */
+  --shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.5);
+  --shadow-float: 0 2px 12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255,255,255,0.06);
+
+  /* === Font === */
+  --font-size-xs: 11px;
+  --font-size-sm: 12px;
+  --font-size-md: 13px;
+  --font-size-lg: 14px;
+}
+
+/* === Light Theme === */
+[data-theme="light"] {
+  --color-bg: #f5f0e8;
+  --color-surface: #ece7de;
+  --color-surface-2: #e2ddd4;
+  --color-surface-3: #d8d3ca;
+  --color-surface-hover: #ddd8cf;
+  --color-border: rgba(0, 0, 0, 0.1);
+  --color-border-light: rgba(0, 0, 0, 0.06);
+
+  --color-text-primary: #1c1c1e;
+  --color-text-secondary: #6c6c70;
+  --color-text-disabled: #aeaeb2;
+
+  --color-accent: #3a7de8;
+  --color-accent-hover: #2d6fd4;
+  --color-accent-light: rgba(58, 125, 232, 0.12);
+  --color-accent-glow: rgba(58, 125, 232, 0.25);
+  --color-danger: #d93025;
+  --color-success: #1a9e4a;
+
+  --color-canvas-bg: #ede8e0;
+
+  --shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.12);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.16);
+  --shadow-float: 0 2px 12px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(0,0,0,0.06);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI",
+    system-ui, sans-serif;
+  font-size: var(--font-size-lg);
+  color: var(--color-text-primary);
+  background: var(--color-bg);
+  overflow: hidden;
+  user-select: none;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#app {
+  width: 100%;
+  height: 100%;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.12);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255,255,255,0.2);
+}
+
+/* Button reset */
+button {
+  cursor: pointer;
+  border: none;
+  background: none;
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+  outline: none;
+}
+button:disabled { cursor: not-allowed; opacity: 0.35; }
+
+/* Input reset */
+input, select, textarea {
+  font-family: inherit;
+  font-size: inherit;
+  outline: none;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-2);
+  color: var(--color-text-primary);
+}
+input:focus, select:focus, textarea:focus {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 2px var(--color-accent-glow);
+}
+
+/* Select arrow color */
+select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%2398989d' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  padding-right: 24px !important;
+}
