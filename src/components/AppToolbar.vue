@@ -25,6 +25,15 @@
         </svg>
         <span>{{ t('保存', 'Save') }}</span>
       </button>
+      <button class="tool-btn" :title="t('另存为 (Ctrl+Shift+S)', 'Save As (Ctrl+Shift+S)')" :disabled="!mindmapStore.current" @click="saveMapAs()">
+        <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.4">
+          <path d="M2 12V2h7.5L12 4.5V12a.5.5 0 01-.5.5H2.5A.5.5 0 012 12z" stroke-linejoin="round"/>
+          <rect x="4.5" y="2" width="4" height="3" rx="0.4"/>
+          <rect x="3.5" y="8" width="7" height="3.5" rx="0.4"/>
+          <path d="M9.5 10.5l1.5-1.5 1.5 1.5M11 9v3" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span>{{ t('另存为', 'Save As') }}</span>
+      </button>
     </div>
 
     <div class="tool-sep" />
@@ -102,7 +111,7 @@ import { useMindmapFile } from '../composables/useMindmapFile'
 const { theme, toggle: toggleTheme } = useTheme()
 const { locale, toggle: toggleLocale, t } = useLocale()
 const mindmapStore = useMindmapStore()
-const { guardDirty, saveMap, openMap, importMarkdown } = useMindmapFile()
+const { guardDirty, saveMap, saveMapAs, openMap, importMarkdown } = useMindmapFile()
 </script>
 
 <style scoped>
