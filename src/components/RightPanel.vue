@@ -248,9 +248,15 @@
 
         <!-- 粗细 -->
         <div class="field">
-          <label class="field-label">{{ t('粗细', 'Width') }} ({{ store.lineStyle.width }}px)</label>
-          <input type="range" :value="store.lineStyle.width" min="1" max="8" class="range-input"
-                 @input="store.setLineStyle({ width: Number(($event.target as HTMLInputElement).value) })" />
+          <div class="field-label-row">
+            <label class="field-label">{{ t('粗细', 'Width') }}</label>
+            <span class="field-value">{{ store.lineStyle.width }}px</span>
+          </div>
+          <div class="slider-wrap">
+            <input type="range" :value="store.lineStyle.width" min="1" max="8" class="range-input"
+                   @input="store.setLineStyle({ width: Number(($event.target as HTMLInputElement).value) })"
+                   :style="{ '--pct': ((store.lineStyle.width - 1) / 7 * 100) + '%' }" />
+          </div>
         </div>
 
         <!-- 线型 -->
@@ -644,14 +650,92 @@ const dotPositions: [number, number][] = [
   color: var(--color-accent);
 }
 
-/* Range input */
+/* label + value row */
+.field-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+.field-value {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-accent);
+  background: var(--color-accent-light);
+  border-radius: 4px;
+  padding: 1px 6px;
+  line-height: 18px;
+  min-width: 28px;
+  text-align: center;
+}
+
+/* Slider wrapper + track */
+.slider-wrap {
+  position: relative;
+  height: 20px;
+  display: flex;
+  align-items: center;
+}
+
+/* Range input — fully custom cross-browser */
 .range-input {
+  -webkit-appearance: none;
+  appearance: none;
   width: 100%;
   height: 4px;
-  border-radius: 2px;
-  accent-color: var(--color-accent);
-  cursor: pointer;
   border: none;
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+  background: linear-gradient(
+    to right,
+    var(--color-accent) 0%,
+    var(--color-accent) var(--pct, 0%),
+    var(--color-border) var(--pct, 0%),
+    var(--color-border) 100%
+  );
+}
+
+/* Thumb — WebKit */
+.range-input::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  border: 2px solid var(--color-accent);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
+  cursor: pointer;
+  transition: transform 0.12s, box-shadow 0.12s;
+}
+.range-input::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+  box-shadow: 0 0 0 4px var(--color-accent-light);
+}
+.range-input:active::-webkit-slider-thumb {
+  transform: scale(1.25);
+  box-shadow: 0 0 0 6px var(--color-accent-light);
+}
+
+/* Thumb — Firefox */
+.range-input::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  border: 2px solid var(--color-accent);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
+  cursor: pointer;
+  transition: transform 0.12s, box-shadow 0.12s;
+}
+.range-input::-moz-range-thumb:hover {
+  transform: scale(1.2);
+  box-shadow: 0 0 0 4px var(--color-accent-light);
+}
+.range-input::-moz-range-track {
+  height: 4px;
+  border-radius: 2px;
   background: var(--color-border);
 }
 
