@@ -16,14 +16,25 @@ jobs:
       matrix:
         include:
           - platform: macos-latest
+            args: '--target aarch64-apple-darwin'
+            rust-targets: 'aarch64-apple-darwin'
+            artifact-name: 'macos-arm64'
+          - platform: macos-latest
+            args: '--target x86_64-apple-darwin'
+            rust-targets: 'x86_64-apple-darwin'
+            artifact-name: 'macos-x64'
+          - platform: macos-latest
             args: '--target universal-apple-darwin'
-            artifact-name: 'dmg'
+            rust-targets: 'aarch64-apple-darwin,x86_64-apple-darwin'
+            artifact-name: 'macos-universal'
           - platform: ubuntu-22.04
             args: '--bundles deb'
-            artifact-name: 'deb'
+            rust-targets: ''
+            artifact-name: 'linux-deb'
           - platform: windows-latest
             args: ''
-            artifact-name: 'exe'
+            rust-targets: ''
+            artifact-name: 'windows-exe'
 
     runs-on: ${{ matrix.platform }}
 
@@ -40,12 +51,13 @@ jobs:
       - name: Install Rust stable
         uses: dtolnay/rust-toolchain@stable
         with:
-          targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
+          targets: ${{ matrix.rust-targets }}
 
       - name: Cache Rust
         uses: Swatinem/rust-cache@v2
         with:
           workspaces: './src-tauri -> target'
+          key: ${{ matrix.artifact-name }}
 
       - name: Install Linux dependencies
         if: matrix.platform == 'ubuntu-22.04'
@@ -71,7 +83,9 @@ jobs:
             ## MindMap ${{ github.ref_name }}
 
             ### Downloads
-            - **macOS** (Universal): `MindMap_*_universal.dmg`
+            - **macOS Apple Silicon (arm64)**: `MindMap_*_aarch64.dmg`
+            - **macOS Intel (x86_64)**: `MindMap_*_x64.dmg`
+            - **macOS Universal**: `MindMap_*_universal.dmg`
             - **Linux** (Debian/Ubuntu): `mindmap_*_amd64.deb`
             - **Windows**: `MindMap_*_x64-setup.exe`
           releaseDraft: true
