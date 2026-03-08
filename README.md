@@ -100,6 +100,18 @@ cd src-tauri && cargo check
 
 ## Building Release Packages
 
+### macOS — Installation Note
+
+macOS may show **"MindMap is damaged and can't be opened"** for unsigned builds downloaded from the internet. This is a Gatekeeper restriction, not an actual problem with the file. To fix it, run this command in Terminal after moving the app to `/Applications`:
+
+```bash
+xattr -cr /Applications/MindMap.app
+```
+
+Then open the app normally.
+
+---
+
 ### macOS — Universal DMG (arm64 + x86_64)
 
 Use the provided script on any Mac (Apple Silicon or Intel):
