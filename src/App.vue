@@ -27,6 +27,8 @@ import './composables/useTheme'
 import { useMindmapStore } from './stores/mindmap'
 import { useMindmapFile } from './composables/useMindmapFile'
 import { getCurrentWindow } from '@tauri-apps/api/window'
+import { listen } from '@tauri-apps/api/event'
+import { invoke } from '@tauri-apps/api/core'
 
 const mindmapStore  = useMindmapStore()
 const canvasAreaRef = ref<InstanceType<typeof CanvasArea> | null>(null)
@@ -100,7 +102,19 @@ function onKeydown(e: KeyboardEvent) {
   }
 }
 
-onMounted(() => window.addEventListener('keydown', onKeydown))
+onMounted(() => {
+  window.addEventListener('keydown', onKeydown)
+
+  // Intercept the OS window close button.
+  // The Rust backend prevents the default close and emits this event so we can
+  // show the unsaved-changes dialog before actually closing.
+  // When the user confirms, we invoke force_close which calls window.destroy()
+  // directly on the Rust side, bypassing the CloseRequested guard entirely.
+  listen<void>('close-requested', () => {
+    guardDirty(() => invoke('force_close'))
+  })
+})
+
 onUnmounted(() => window.removeEventListener('keydown', onKeydown))
 </script>
 
