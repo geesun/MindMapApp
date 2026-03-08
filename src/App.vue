@@ -26,6 +26,7 @@ import UnsavedDialog from './components/UnsavedDialog.vue'
 import './composables/useTheme'
 import { useMindmapStore } from './stores/mindmap'
 import { useMindmapFile } from './composables/useMindmapFile'
+import { useAutosave } from './composables/useAutosave'
 import { getCurrentWindow } from '@tauri-apps/api/window'
 import { listen } from '@tauri-apps/api/event'
 import { invoke } from '@tauri-apps/api/core'
@@ -33,6 +34,9 @@ import { invoke } from '@tauri-apps/api/core'
 const mindmapStore  = useMindmapStore()
 const canvasAreaRef = ref<InstanceType<typeof CanvasArea> | null>(null)
 const { guardDirty, saveMap, saveMapAs, openMap } = useMindmapFile()
+
+// Start autosave
+useAutosave()
 
 // ── Window title ─────────────────────────────────────────────────────────────
 watch(

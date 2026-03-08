@@ -133,6 +133,39 @@
               </li>
             </ul>
           </div>
+
+          <!-- Drafts: unsaved crash-recovery files -->
+          <div v-if="drafts.length > 0" class="welcome-drafts">
+            <p class="recent-heading draft-heading">
+              <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5">
+                <circle cx="7" cy="7" r="5.5"/>
+                <path d="M7 4.5V7l1.5 1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              {{ t('未保存的草稿', 'Unsaved Drafts') }}
+            </p>
+            <ul class="recent-list">
+              <li
+                v-for="draft in drafts"
+                :key="draft.id"
+                class="recent-item draft-item"
+              >
+                <svg class="recent-file-icon draft-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4">
+                  <path d="M3 2A1 1 0 014 1h5.5L12 3.5V14a1 1 0 01-1 1H4a1 1 0 01-1-1V2z" stroke-linejoin="round"/>
+                  <path d="M9 1v3h3" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M5.5 9.5l1.5 1.5 2.5-2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span class="recent-item-body" style="cursor:pointer" @click="guardDirty(() => recoverDraft(draft))">
+                  <span class="recent-item-name">{{ draft.title }}</span>
+                  <span class="recent-item-path">{{ t('草稿 · ', 'Draft · ') }}{{ formatDraftTime(draft.savedAt) }}</span>
+                </span>
+                <button class="draft-discard-btn" :title="t('丢弃草稿', 'Discard draft')" @click.stop="discardDraft(draft)">
+                  <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.8">
+                    <path d="M3 3l8 8M11 3l-8 8" stroke-linecap="round"/>
+                  </svg>
+                </button>
+              </li>
+            </ul>
+          </div>
         </div>
       </div>
     </div>
@@ -143,6 +176,24 @@
         <span class="status-item">{{ t('节点数：', 'Nodes: ') }}<strong>{{ nodeCount }}</strong></span>
         <span class="status-divider" />
         <span class="status-item">{{ t('已选：', 'Selected: ') }}<strong>{{ store.selectedId ? 1 : 0 }}</strong></span>
+        <template v-if="autosaveStatus !== 'idle'">
+          <span class="status-divider" />
+          <span class="status-item autosave-status" :class="autosaveStatus">
+            <svg v-if="autosaveStatus === 'saving'" class="autosave-spin" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8">
+              <path d="M8 2a6 6 0 1 1-4.24 1.76" stroke-linecap="round"/>
+            </svg>
+            <svg v-else-if="autosaveStatus === 'saved'" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 8l3.5 3.5L13 5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <svg v-else-if="autosaveStatus === 'error'" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M8 5v4M8 11h.01" stroke-linecap="round"/>
+              <circle cx="8" cy="8" r="6"/>
+            </svg>
+            {{ autosaveStatus === 'saving' ? t('自动保存中…', 'Saving…')
+             : autosaveStatus === 'saved'  ? t('已自动保存', 'Auto-saved')
+             : t('自动保存失败', 'Save failed') }}
+          </span>
+        </template>
       </div>
       <div class="status-right">
         <span class="status-item">{{ layoutLabel }}</span>
@@ -158,12 +209,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useMindmapStore } from '../stores/mindmap'
-import { useMindmapFile } from '../composables/useMindmapFile'
+import { useMindmapFile, deserialize } from '../composables/useMindmapFile'
 import { useRecentFiles } from '../composables/useRecentFiles'
 import { useTheme } from '../composables/useTheme'
 import { useLocale } from '../composables/useLocale'
+import { autosaveStatus, autosaveLastTime, listDrafts, deleteDraft, readDraft } from '../composables/useAutosave'
+import type { DraftEntry } from '../composables/useAutosave'
 import type { MindNode } from '../types/mindmap'
 import MindCanvas from './MindCanvas.vue'
 
@@ -174,6 +227,38 @@ const { theme, toggle: toggleTheme } = useTheme()
 const { locale, toggle: toggleLocale, t } = useLocale()
 const viewport      = ref<HTMLDivElement | null>(null)
 const mindCanvasRef = ref<InstanceType<typeof MindCanvas> | null>(null)
+
+// Draft recovery
+const drafts = ref<DraftEntry[]>([])
+
+onMounted(async () => {
+  drafts.value = await listDrafts()
+})
+
+async function recoverDraft(draft: DraftEntry) {
+  const content = await readDraft(draft.id)
+  if (!content) return
+  // Strip the leading savedAt comment line before deserializing
+  const clean = content.replace(/^<!--\s*savedAt:\s*\d+\s*-->\n/, '')
+  const map = deserialize(clean, '')
+  // Restore the original id so a subsequent real save will overwrite the same draft
+  map.id = draft.id
+  map.dirty = true
+  store.loadMap(map)
+  // Remove from the UI list (the draft file stays until a real save clears it)
+  drafts.value = drafts.value.filter(d => d.id !== draft.id)
+}
+
+async function discardDraft(draft: DraftEntry) {
+  await deleteDraft(draft.id)
+  drafts.value = drafts.value.filter(d => d.id !== draft.id)
+}
+
+function formatDraftTime(ms: number): string {
+  const d = new Date(ms)
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
+}
 
 defineExpose({ mindCanvasRef })
 
@@ -479,6 +564,60 @@ function isColorDark(hex: string): boolean {
   gap: var(--spacing-xs);
 }
 
+/* Drafts column */
+.welcome-drafts {
+  width: 256px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.draft-heading {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--color-warning, #e09000) !important;
+  border-bottom-color: color-mix(in srgb, var(--color-warning, #e09000) 30%, transparent) !important;
+}
+.draft-heading svg {
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+}
+
+.draft-item {
+  /* override cursor: the text area is clickable, not the whole row */
+  cursor: default;
+}
+.draft-icon {
+  color: var(--color-warning, #e09000) !important;
+}
+
+.draft-discard-btn {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  color: var(--color-text-disabled);
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity 0.12s, background 0.12s, color 0.12s;
+}
+.draft-discard-btn svg {
+  width: 10px;
+  height: 10px;
+}
+.draft-item:hover .draft-discard-btn {
+  opacity: 1;
+}
+.draft-discard-btn:hover {
+  background: var(--color-danger-light, rgba(220,60,60,0.1));
+  color: var(--color-danger);
+}
+
 .recent-heading {
   font-size: var(--font-size-sm);
   font-weight: 600;
@@ -592,4 +731,28 @@ function isColorDark(hex: string): boolean {
   transition: background 0.1s, color 0.1s;
 }
 .zoom-reset:hover { background: var(--color-surface-hover); color: var(--color-text-primary); }
+
+/* Autosave status indicator */
+.autosave-status {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  transition: color 0.2s;
+}
+.autosave-status svg {
+  width: 11px;
+  height: 11px;
+  flex-shrink: 0;
+}
+.autosave-status.saving { color: var(--color-text-secondary); }
+.autosave-status.saved  { color: var(--color-success); }
+.autosave-status.error  { color: var(--color-danger); }
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+.autosave-spin {
+  animation: spin 1s linear infinite;
+  transform-origin: center;
+}
 </style>

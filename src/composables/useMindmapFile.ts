@@ -1,5 +1,6 @@
 import { save, open } from '@tauri-apps/plugin-dialog'
 import { writeFile, readTextFile } from '@tauri-apps/plugin-fs'
+import { deleteDraft } from './useAutosave'
 import type { MindMap, MindNode, NodeStyle, LineStyle, CanvasBackground, LayoutType } from '../types/mindmap'
 import { DEFAULT_LINE_STYLE, DEFAULT_CANVAS_BG, DEFAULT_NODE_STYLE } from '../types/mindmap'
 import { useMindmapStore } from '../stores/mindmap'
@@ -443,6 +444,7 @@ export function useMindmapFile() {
       await writeMapToFile(store.current, store.current.filePath)
       store.current.dirty = false
       addRecentFile(store.current.filePath, store.current.title)
+      await deleteDraft(store.current.id)
     } else {
       await saveMapAs()
     }
@@ -456,9 +458,11 @@ export function useMindmapFile() {
     })
     if (!filePath) return
     await writeMapToFile(store.current, filePath)
+    const mapId = store.current.id
     store.current.filePath = filePath
     store.current.dirty = false
     addRecentFile(filePath, store.current.title)
+    await deleteDraft(mapId)
   }
 
   async function openMap(): Promise<void> {

@@ -16,12 +16,17 @@
     "fs:allow-read-dir",
     "fs:allow-exists",
     "fs:allow-create",
+    "fs:allow-mkdir",
+    "fs:allow-remove",
+    "fs:allow-applocaldata-read-recursive",
+    "fs:allow-applocaldata-write-recursive",
     "fs:scope-home-recursive",
     "fs:scope-desktop-recursive",
     "fs:scope-document-recursive",
     "fs:scope-download-recursive",
     "fs:scope-picture-recursive",
     "fs:scope-public-recursive",
+    "fs:scope-applocaldata-recursive",
     "shell:allow-open"
   ]
 }
