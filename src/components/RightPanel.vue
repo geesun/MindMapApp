@@ -313,8 +313,9 @@
           <button v-for="l in layouts" :key="l.value"
                   class="layout-option"
                   :class="{ active: selectedLayout === l.value }"
+                  :title="l.label"
                   @click="selectedLayout = l.value">
-            <span>{{ l.label }}</span>
+            <span>{{ l.short }}</span>
           </button>
         </div>
       </div>
@@ -431,10 +432,10 @@ const selectedLayout = computed<LayoutType>({
   get: () => store.current?.layout ?? 'radial',
   set: (val: LayoutType) => store.setLayout(val),
 })
-const layouts = computed<{ label: string; value: LayoutType }[]>(() => [
-  { label: t('放射状',       'Radial'),           value: 'radial'  },
-  { label: t('树形(左→右)',  'Tree (Left→Right)'), value: 'tree-lr' },
-  { label: t('树形(上→下)',  'Tree (Top→Bottom)'), value: 'tree-tb' },
+const layouts = computed<{ label: string; short: string; value: LayoutType }[]>(() => [
+  { label: t('放射状',       'Radial'),           short: t('放射状', 'Radial'),   value: 'radial'  },
+  { label: t('树形(左→右)',  'Tree (Left→Right)'), short: t('左→右',  'L → R'),    value: 'tree-lr' },
+  { label: t('树形(上→下)',  'Tree (Top→Bottom)'), short: t('上→下',  'T → B'),    value: 'tree-tb' },
 ])
 
 // Canvas background presets — split by theme
@@ -774,7 +775,7 @@ const dotPositions: [number, number][] = [
 /* 布局选项 */
 .layout-options {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr 1fr 1fr;
   gap: var(--spacing-xs);
 }
 .layout-option {
@@ -790,6 +791,9 @@ const dotPositions: [number, number][] = [
   font-size: var(--font-size-xs);
   color: var(--color-text-secondary);
   background: var(--color-surface);
+  text-align: center;
+  line-height: 1.3;
+  word-break: keep-all;
 }
 .layout-option:hover {
   border-color: var(--color-accent);
