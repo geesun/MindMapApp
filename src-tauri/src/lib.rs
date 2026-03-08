@@ -1,5 +1,5 @@
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-use tauri::{Emitter, WindowEvent};
+use tauri::{Emitter, Manager, WindowEvent};
 
 #[tauri::command]
 fn greet(name: &str) -> String {
@@ -30,10 +30,17 @@ pub fn run() {
             }
         })
         .setup(|app| {
-            // On macOS: only keep the standard app submenu (app name, Hide, Quit, etc.)
-            // This removes File/Edit/View/Window/Help from the menu bar while keeping
-            // the Apple menu intact (Apple menu is system-level and unaffected).
-            use tauri::menu::{MenuBuilder, SubmenuBuilder};
+            // On macOS: build the app menu manually so that Cmd+Q / Quit goes through
+            // our unsaved-changes guard instead of terminating the process directly.
+            // We replace the built-in .quit() item with a custom "Quit MindMap" item
+            // that emits "close-requested" to the frontend.
+            use tauri::menu::{MenuBuilder, MenuItemBuilder, SubmenuBuilder};
+
+            let quit_item = MenuItemBuilder::new("Quit MindMap")
+                .id("quit")
+                .accelerator("CmdOrCtrl+Q")
+                .build(app)?;
+
             let app_submenu = SubmenuBuilder::new(app, "MindMap")
                 .about(None)
                 .separator()
@@ -41,10 +48,23 @@ pub fn run() {
                 .hide_others()
                 .show_all()
                 .separator()
-                .quit()
+                .item(&quit_item)
                 .build()?;
+
             let menu = MenuBuilder::new(app).item(&app_submenu).build()?;
             app.set_menu(menu)?;
+
+            // When the custom Quit item is clicked, emit close-requested to the
+            // main window so the frontend's unsaved-changes guard runs.
+            let app_handle = app.handle().clone();
+            app.on_menu_event(move |_app, event| {
+                if event.id() == "quit" {
+                    if let Some(window) = app_handle.get_webview_window("main") {
+                        window.emit("close-requested", ()).ok();
+                    }
+                }
+            });
+
             Ok(())
         })
         .run(tauri::generate_context!())
