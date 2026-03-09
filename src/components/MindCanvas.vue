@@ -1135,7 +1135,26 @@ function resetZoom() {
   centerView()
 }
 
-defineExpose({ startEdit, tryDelete, selectedId, getExportData, zoom, zoomIn, zoomOut, resetZoom })
+function addChildToSelected() {
+  const id = selectedId.value
+  if (!id) return
+  store.addChild(id, t('新节点', 'New Node'))
+  nextTick(() => { store.lastAddedId && startEdit(store.lastAddedId) })
+}
+
+function addSiblingToSelected() {
+  const id = selectedId.value
+  if (!id) return
+  const isRoot = store.current?.root.id === id
+  if (isRoot) {
+    store.addChild(id, t('新节点', 'New Node'))
+  } else {
+    store.addSibling(id, t('新节点', 'New Node'))
+  }
+  nextTick(() => { store.lastAddedId && startEdit(store.lastAddedId) })
+}
+
+defineExpose({ startEdit, tryDelete, selectedId, getExportData, zoom, zoomIn, zoomOut, resetZoom, addChildToSelected, addSiblingToSelected })
 </script>
 
 <style scoped>

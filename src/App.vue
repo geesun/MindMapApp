@@ -27,6 +27,7 @@ import './composables/useTheme'
 import { useMindmapStore } from './stores/mindmap'
 import { useMindmapFile } from './composables/useMindmapFile'
 import { useAutosave } from './composables/useAutosave'
+import { useLocale } from './composables/useLocale'
 import { getCurrentWindow } from '@tauri-apps/api/window'
 import { listen } from '@tauri-apps/api/event'
 import { invoke } from '@tauri-apps/api/core'
@@ -34,6 +35,7 @@ import { invoke } from '@tauri-apps/api/core'
 const mindmapStore  = useMindmapStore()
 const canvasAreaRef = ref<InstanceType<typeof CanvasArea> | null>(null)
 const { guardDirty, saveMap, saveMapAs, openMap } = useMindmapFile()
+const { locale } = useLocale()
 
 // Start autosave
 useAutosave()
@@ -109,15 +111,29 @@ function onKeydown(e: KeyboardEvent) {
 onMounted(() => {
   window.addEventListener('keydown', onKeydown)
 
+  // Sync native menu labels to the current locale on startup.
+  invoke('update_menu_labels', { locale: locale.value }).catch(() => {})
+
   // Intercept the OS window close button.
-  // The Rust backend prevents the default close and emits this event so we can
-  // show the unsaved-changes dialog before actually closing.
-  // When the user confirms, we invoke force_close which calls window.destroy()
-  // directly on the Rust side, bypassing the CloseRequested guard entirely.
   listen<void>('close-requested', () => {
     guardDirty(() => invoke('force_close'))
   })
+
+  // Native app menu events forwarded from Rust
+  listen<void>('menu-file-new',         () => guardDirty(() => { mindmapStore.showNewDialog = true }))
+  listen<void>('menu-file-open',        () => guardDirty(() => openMap()))
+  listen<void>('menu-file-save',        () => saveMap())
+  listen<void>('menu-file-save-as',     () => saveMapAs())
+  listen<void>('menu-edit-add-child',   () => canvasAreaRef.value?.mindCanvasRef?.addChildToSelected())
+  listen<void>('menu-edit-add-sibling', () => canvasAreaRef.value?.mindCanvasRef?.addSiblingToSelected())
 })
+
+// Keep "Add Child / Sibling" menu items in sync with whether a node is selected.
+watch(
+  () => mindmapStore.selectedId,
+  (id) => { invoke('set_node_menu_enabled', { enabled: !!id }) },
+  { immediate: true }
+)
 
 onUnmounted(() => window.removeEventListener('keydown', onKeydown))
 </script>
